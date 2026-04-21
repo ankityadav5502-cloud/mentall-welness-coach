@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const palette = [
   { name: "sage", className: "bg-secondary" },
@@ -18,6 +19,7 @@ export const ColorFlow = () => {
   const [playing, setPlaying] = useState(false);
   const [showing, setShowing] = useState(false);
   const [score, setScore] = useState(0);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
 
   const next = () => {
     const newSeq = [...sequence, Math.floor(Math.random() * palette.length)];
@@ -51,6 +53,18 @@ export const ColorFlow = () => {
       }
     } else {
       setPlaying(false);
+      void (async () => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
+        await (supabase as any).from("game_sessions").insert({
+          user_id: user.id,
+          game: "color-flow",
+          score,
+          duration_seconds: startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0,
+        });
+      })();
     }
   };
 
@@ -62,6 +76,7 @@ export const ColorFlow = () => {
     setSequence([]);
     setScore(0);
     setUserStep(0);
+    setStartedAt(Date.now());
     setPlaying(true);
   };
 

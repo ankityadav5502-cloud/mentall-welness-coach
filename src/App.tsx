@@ -10,6 +10,7 @@ import GuardianPortal from "./pages/GuardianPortal";
 import Journal from "./pages/Journal";
 import Games from "./pages/Games";
 import Auth from "./pages/Auth";
+import OnboardingRole from "./pages/OnboardingRole";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/onboarding" element={<OnboardingRole />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<Index />} />
             <Route path="/journal" element={<Journal />} />

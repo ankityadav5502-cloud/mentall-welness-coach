@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wind } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const phases = [
   { label: "Breathe in", duration: 4000, scale: 1.4 },
@@ -14,6 +15,8 @@ export const BreathingGame = () => {
   const [running, setRunning] = useState(false);
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [cycles, setCycles] = useState(0);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [lastLoggedCycle, setLastLoggedCycle] = useState(0);
 
   useEffect(() => {
     if (!running) return;
@@ -28,6 +31,25 @@ export const BreathingGame = () => {
   }, [phaseIdx, running]);
 
   const phase = phases[phaseIdx];
+
+  useEffect(() => {
+    if (cycles < 3 || cycles === lastLoggedCycle) return;
+    const logSession = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const duration = startedAt ? Math.round((Date.now() - startedAt) / 1000) : 0;
+      await (supabase as any).from("game_sessions").insert({
+        user_id: user.id,
+        game: "box-breathing",
+        score: cycles,
+        duration_seconds: duration,
+      });
+      setLastLoggedCycle(cycles);
+    };
+    void logSession();
+  }, [cycles, lastLoggedCycle, startedAt]);
 
   return (
     <Card className="border-border/60 shadow-card">
@@ -64,6 +86,7 @@ export const BreathingGame = () => {
                 setRunning(false);
               } else {
                 setPhaseIdx(0);
+                setStartedAt(Date.now());
                 setRunning(true);
               }
             }}

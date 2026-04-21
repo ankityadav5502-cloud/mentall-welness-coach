@@ -1,22 +1,44 @@
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 type Props = {
   bloomRatio: number; // 0..1
 };
 
 export const VirtualCompanion = ({ bloomRatio }: Props) => {
+  const [dbRatio, setDbRatio] = useState<number | null>(null);
+  useEffect(() => {
+    const loadRatio = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const today = new Date().toISOString().slice(0, 10);
+      const { data } = await (supabase as any)
+        .from("dopamine_tasks")
+        .select("done")
+        .eq("user_id", user.id)
+        .eq("day", today);
+      if (!data || data.length === 0) return;
+      setDbRatio(data.filter((row: { done: boolean }) => row.done).length / data.length);
+    };
+    void loadRatio();
+  }, []);
+
+  const effectiveRatio = useMemo(() => dbRatio ?? bloomRatio, [bloomRatio, dbRatio]);
   const stage =
-    bloomRatio >= 0.85
+    effectiveRatio >= 0.85
       ? "Blooming beautifully"
-      : bloomRatio >= 0.5
+      : effectiveRatio >= 0.5
         ? "Growing happily"
-        : bloomRatio >= 0.2
+        : effectiveRatio >= 0.2
           ? "Sprouting"
           : "Resting — and that's okay";
 
   // Petal count grows with progress, never shames if low.
-  const petals = Math.max(3, Math.round(3 + bloomRatio * 6));
+  const petals = Math.max(3, Math.round(3 + effectiveRatio * 6));
 
   return (
     <Card className="overflow-hidden border-0 bg-gradient-bloom p-6 text-primary-foreground shadow-card md:p-8">

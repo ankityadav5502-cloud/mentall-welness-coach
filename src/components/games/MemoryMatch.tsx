@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const symbols = ["🌿", "🌸", "🍵", "🪷", "🌞", "🌊"];
 
@@ -20,8 +21,28 @@ export const MemoryMatch = () => {
   const [deck, setDeck] = useState<Card[]>(buildDeck);
   const [picks, setPicks] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
+  const [startedAt, setStartedAt] = useState(Date.now());
+  const [logged, setLogged] = useState(false);
 
   const won = useMemo(() => deck.every((c) => c.matched), [deck]);
+
+  useEffect(() => {
+    if (!won || logged) return;
+    const logSession = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      await (supabase as any).from("game_sessions").insert({
+        user_id: user.id,
+        game: "memory-match",
+        score: Math.max(100 - moves * 3, 10),
+        duration_seconds: Math.round((Date.now() - startedAt) / 1000),
+      });
+      setLogged(true);
+    };
+    void logSession();
+  }, [logged, moves, startedAt, won]);
 
   useEffect(() => {
     if (picks.length !== 2) return;
@@ -51,6 +72,8 @@ export const MemoryMatch = () => {
     setDeck(buildDeck());
     setPicks([]);
     setMoves(0);
+    setStartedAt(Date.now());
+    setLogged(false);
   };
 
   return (

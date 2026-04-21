@@ -3,17 +3,29 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { moodOptions } from "@/lib/mockData";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const MoodLogger = () => {
   const [selected, setSelected] = useState<number | null>(null);
 
-  const handleSelect = (value: number, label: string) => {
+  const handleSelect = async (value: number, label: string, emoji: string) => {
     setSelected(value);
-    // TODO(backend): persist mood log to Supabase here.
-    // await supabase.from('mood_logs').insert({ user_id, value, logged_at: new Date() })
-    toast.success(`Mood logged: ${label}`, {
-      description: "Thanks for checking in. That's all you need to do today.",
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await (supabase as any).from("moods").insert({
+      user_id: user.id,
+      value,
+      emoji,
     });
+
+    if (error) {
+      toast.error("Could not log mood", { description: error.message });
+      return;
+    }
+    toast.success(`Mood logged: ${label}`, { description: "Thanks for checking in. That's all you need to do today." });
   };
 
   return (
@@ -34,7 +46,7 @@ export const MoodLogger = () => {
           return (
             <button
               key={m.value}
-              onClick={() => handleSelect(m.value, m.label)}
+              onClick={() => void handleSelect(m.value, m.label, m.emoji)}
               className={cn(
                 "group flex flex-col items-center gap-1 rounded-2xl border-2 border-transparent bg-background/70 p-3 transition-all hover:scale-[1.04] hover:bg-background md:p-5",
                 isActive && "border-primary bg-background shadow-soft"

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Sparkles } from "lucide-react";
+import { getCurrentUserRoles, getDefaultRouteForRoles } from "@/lib/roles";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -16,12 +17,26 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // If already signed in, send to app
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/", { replace: true });
-    });
+    // Always set up listener before getSession
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate("/", { replace: true });
+      if (!session) return;
+      if (session.user.is_anonymous) {
+        navigate("/", { replace: true });
+        return;
+      }
+      void getCurrentUserRoles()
+        .then((roles) => navigate(roles.length ? getDefaultRouteForRoles(roles) : "/onboarding", { replace: true }))
+        .catch(() => navigate("/onboarding", { replace: true }));
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) return;
+      if (data.session.user.is_anonymous) {
+        navigate("/", { replace: true });
+        return;
+      }
+      void getCurrentUserRoles()
+        .then((roles) => navigate(roles.length ? getDefaultRouteForRoles(roles) : "/onboarding", { replace: true }))
+        .catch(() => navigate("/onboarding", { replace: true }));
     });
     return () => sub.subscription.unsubscribe();
   }, [navigate]);

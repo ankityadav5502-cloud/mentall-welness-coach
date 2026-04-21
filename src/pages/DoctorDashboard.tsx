@@ -1,9 +1,10 @@
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { aiScribeSummary, abdmStats } from "@/lib/mockData";
 import { Activity, FileCheck2, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const severityStyles = {
   good: { icon: CheckCircle2, badge: "bg-success/15 text-success", label: "Stable" },
@@ -12,7 +13,52 @@ const severityStyles = {
 } as const;
 
 const DoctorDashboard = () => {
-  const progress = (abdmStats.recordsThisMonth / abdmStats.nextMilestone) * 100;
+  const [rows, setRows] = useState<{ patient: string; insight: string; severity: "good" | "warning" | "alert" }[]>([]);
+  const [recordsThisMonth, setRecordsThisMonth] = useState(0);
+  const nextMilestone = 200;
+  const incentiveTier = recordsThisMonth >= 200 ? "Tier 3" : recordsThisMonth >= 100 ? "Tier 2" : "Tier 1";
+
+  useEffect(() => {
+    const load = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const monthStart = new Date();
+      monthStart.setDate(1);
+
+      const [{ count }, { data: assignments }] = await Promise.all([
+        (supabase as any)
+          .from("clinical_records")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", monthStart.toISOString())
+          .eq("doctor_id", user.id),
+        (supabase as any)
+          .from("doctor_patient_assignments")
+          .select("patient_id, profiles:patient_id(display_name)")
+          .eq("doctor_id", user.id),
+      ]);
+      setRecordsThisMonth(count ?? 0);
+
+      const patientRows = await Promise.all(
+        (assignments ?? []).map(async (a: any) => {
+          const { data } = await supabase.functions.invoke("summarize-week", {
+            body: { patientId: a.patient_id },
+          });
+          return {
+            patient: a.profiles?.display_name ?? "Patient",
+            insight: data?.summary ?? "No summary available for this week.",
+            severity: (data?.severity ?? "good") as "good" | "warning" | "alert",
+          };
+        })
+      );
+      setRows(patientRows);
+    };
+    void load();
+  }, []);
+
+  const progress = useMemo(() => (recordsThisMonth / nextMilestone) * 100, [recordsThisMonth]);
 
   return (
     <div className="space-y-8">
@@ -37,7 +83,7 @@ const DoctorDashboard = () => {
             </div>
           </div>
           <ul className="divide-y divide-border/60">
-            {aiScribeSummary.map((row) => {
+            {rows.map((row) => {
               const meta = severityStyles[row.severity];
               const Icon = meta.icon;
               return (
@@ -78,20 +124,20 @@ const DoctorDashboard = () => {
             </div>
           </div>
           <p className="font-display text-5xl font-semibold text-foreground">
-            {abdmStats.recordsThisMonth}
+            {recordsThisMonth}
           </p>
           <p className="text-sm text-muted-foreground">digital records this month</p>
 
           <div className="mt-5 space-y-2">
             <Progress value={progress} className="h-2" />
             <p className="text-xs text-muted-foreground">
-              {abdmStats.nextMilestone - abdmStats.recordsThisMonth} more to reach next
+              {Math.max(nextMilestone - recordsThisMonth, 0)} more to reach next
               incentive milestone
             </p>
           </div>
 
           <Badge variant="secondary" className="mt-4 rounded-full">
-            Govt. incentive: {abdmStats.incentiveTier}
+            Govt. incentive: {incentiveTier}
           </Badge>
         </Card>
       </section>

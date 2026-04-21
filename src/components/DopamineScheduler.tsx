@@ -1,26 +1,81 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Coffee } from "lucide-react";
-import { seedDopamineTasks, type DopamineTask } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+
+type DopamineTask = {
+  id: string;
+  label: string;
+  type: "mastery" | "pleasure";
+  done: boolean;
+};
 
 type Props = {
   onProgressChange?: (ratio: number) => void;
 };
 
 export const DopamineScheduler = ({ onProgressChange }: Props) => {
-  const [tasks, setTasks] = useState<DopamineTask[]>(seedDopamineTasks);
+  const [tasks, setTasks] = useState<DopamineTask[]>([]);
 
-  const toggle = (id: string) => {
+  useEffect(() => {
+    const loadTasks = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const { data, error } = await (supabase as any)
+        .from("dopamine_tasks")
+        .select("id,label,type,done")
+        .eq("user_id", user.id)
+        .eq("day", today)
+        .order("created_at", { ascending: true });
+
+      if (error) return;
+
+      if (!data || data.length === 0) {
+        const defaults = [
+          { label: "Finish one work task", type: "mastery" },
+          { label: "10-minute focused study", type: "mastery" },
+          { label: "Tidy your desk", type: "mastery" },
+          { label: "Chai break with a friend", type: "pleasure" },
+          { label: "Listen to a favourite song", type: "pleasure" },
+          { label: "Step outside for sunlight", type: "pleasure" },
+        ];
+        const { data: inserted } = await (supabase as any)
+          .from("dopamine_tasks")
+          .insert(defaults.map((row) => ({ ...row, user_id: user.id, done: false, day: today })))
+          .select("id,label,type,done");
+        setTasks((inserted ?? []) as DopamineTask[]);
+        onProgressChange?.(0);
+        return;
+      }
+
+      const typed = data as DopamineTask[];
+      setTasks(typed);
+      onProgressChange?.(typed.filter((t) => t.done).length / typed.length);
+    };
+
+    void loadTasks();
+  }, [onProgressChange]);
+
+  const toggle = async (id: string) => {
+    let nextDone = false;
     setTasks((prev) => {
-      const next = prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+      const next = prev.map((t) => {
+        if (t.id !== id) return t;
+        nextDone = !t.done;
+        return { ...t, done: nextDone };
+      });
       const ratio = next.filter((t) => t.done).length / next.length;
-      // TODO(backend): persist toggled task to Supabase
       onProgressChange?.(ratio);
       return next;
     });
+    await (supabase as any).from("dopamine_tasks").update({ done: nextDone }).eq("id", id);
   };
 
   const groups = useMemo(

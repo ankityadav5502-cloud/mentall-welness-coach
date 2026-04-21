@@ -1,15 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { BookHeart, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-
-// TODO(backend): Persist journal entries to Supabase table `journal_entries`
-// columns: id (uuid), user_id (uuid, FK auth.users), date (date),
-// free_text (text), prompt_win (text), prompt_feeling (text), prompt_intention (text),
-// created_at (timestamptz). Enable RLS so users only see their own rows.
+import { supabase } from "@/integrations/supabase/client";
 
 const prompts = [
   { key: "win", label: "One small win today", placeholder: "Even tiny ones count…" },
@@ -27,14 +23,59 @@ export const JournalEntry = () => {
     intention: "",
   });
   const [showPrompts, setShowPrompts] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
-    // TODO(backend): replace with supabase.from('journal_entries').insert(...)
-    toast.success("Journal saved 🌱", {
-      description: "Your reflection is safe with you.",
-    });
-    setFreeText("");
-    setAnswers({ win: "", feeling: "", intention: "" });
+  useEffect(() => {
+    const loadTodayEntry = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const { data } = await (supabase as any)
+        .from("journal_entries")
+        .select("free_text,prompt_win,prompt_feeling,prompt_intention")
+        .eq("user_id", user.id)
+        .eq("date", today)
+        .maybeSingle();
+
+      if (!data) return;
+      setFreeText(data.free_text ?? "");
+      setAnswers({
+        win: data.prompt_win ?? "",
+        feeling: data.prompt_feeling ?? "",
+        intention: data.prompt_intention ?? "",
+      });
+      setShowPrompts(Boolean(data.prompt_win || data.prompt_feeling || data.prompt_intention));
+    };
+    void loadTodayEntry();
+  }, []);
+
+  const handleSave = async () => {
+    setLoading(true);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const payload = {
+      user_id: user.id,
+      date: today,
+      free_text: freeText,
+      prompt_win: answers.win,
+      prompt_feeling: answers.feeling,
+      prompt_intention: answers.intention,
+    };
+
+    const { error } = await (supabase as any).from("journal_entries").upsert(payload, { onConflict: "user_id,date" });
+    setLoading(false);
+    if (error) {
+      toast.error("Could not save journal", { description: error.message });
+      return;
+    }
+    toast.success("Journal saved 🌱", { description: "Your reflection is safe with you." });
   };
 
   const hasContent =
@@ -108,7 +149,7 @@ export const JournalEntry = () => {
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={!hasContent} className="rounded-full">
+          <Button onClick={() => void handleSave()} disabled={!hasContent || loading} className="rounded-full">
             Save reflection
           </Button>
         </div>

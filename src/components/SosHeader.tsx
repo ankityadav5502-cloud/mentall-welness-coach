@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LogOut, Phone, ShieldAlert } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,22 +13,74 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { to: "/", label: "Patient" },
-  { to: "/journal", label: "Journal" },
-  { to: "/games", label: "Games" },
-  { to: "/doctor", label: "Doctor" },
-  { to: "/guardian", label: "Guardian" },
-];
+import type { AppRole } from "@/lib/roles";
+import { getCurrentUserRoles } from "@/lib/roles";
+import { toast } from "sonner";
 
 export const SosHeader = () => {
   const [open, setOpen] = useState(false);
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.is_anonymous) {
+        setRoles(["patient"]);
+        return;
+      }
+      void getCurrentUserRoles().then(setRoles).catch(() => setRoles([]));
+    };
+    void loadRoles();
+  }, []);
+
+  const navItems = useMemo(() => {
+    const items = [];
+    if (roles.includes("patient")) {
+      items.push(
+        { to: "/", label: "Patient" },
+        { to: "/journal", label: "Journal" },
+        { to: "/games", label: "Games" }
+      );
+    }
+    if (roles.includes("doctor")) items.push({ to: "/doctor", label: "Doctor" });
+    if (roles.includes("guardian")) items.push({ to: "/guardian", label: "Guardian" });
+    return items;
+  }, [roles]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth", { replace: true });
+  };
+
+  const handleOpenChange = async (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) return;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await (supabase as any)
+      .from("sos_events")
+      .insert({ user_id: user.id })
+      .select("id")
+      .single();
+
+    if (error) {
+      toast.error("Could not trigger SOS", { description: error.message });
+      return;
+    }
+
+    const { error: notifyError } = await supabase.functions.invoke("notify-guardians", {
+      body: { userId: user.id, sosEventId: data.id },
+    });
+    if (notifyError) {
+      toast.error("Guardians could not be notified", { description: notifyError.message });
+    }
   };
 
   return (
@@ -64,7 +116,7 @@ export const SosHeader = () => {
         </nav>
 
         <div className="flex items-center gap-2">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(value) => void handleOpenChange(value)}>
           <DialogTrigger asChild>
             <Button
               variant="destructive"

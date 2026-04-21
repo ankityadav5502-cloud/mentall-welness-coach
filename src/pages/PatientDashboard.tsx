@@ -3,15 +3,11 @@ import { Link } from "react-router-dom";
 import MoodLogger from "@/components/MoodLogger";
 import DopamineScheduler from "@/components/DopamineScheduler";
 import VirtualCompanion from "@/components/VirtualCompanion";
-import { seedDopamineTasks } from "@/lib/mockData";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookHeart, Gamepad2 } from "lucide-react";
 
-const initialRatio =
-  seedDopamineTasks.filter((t) => t.done).length / seedDopamineTasks.length;
-
 const PatientDashboard = () => {
-  const [bloomRatio, setBloomRatio] = useState(initialRatio);
+  const [bloomRatio, setBloomRatio] = useState(0);
 
   return (
     <div className="space-y-8">
