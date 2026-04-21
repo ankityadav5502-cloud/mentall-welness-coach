@@ -1,7 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { dependents, burnoutResources } from "@/lib/mockData";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import MoodActivityChart from "@/components/MoodActivityChart";
+import { dependents, burnoutResources, dependentTrends } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { Heart, Headphones, BookOpen, PhoneCall } from "lucide-react";
 
@@ -73,6 +80,33 @@ const GuardianPortal = () => {
             </Card>
           ))}
         </div>
+      </section>
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="font-display text-xl font-semibold">How they're really doing</h2>
+          <p className="text-sm text-muted-foreground">
+            Mood tends to follow activity and medication. Use this to start a gentle conversation — not to monitor.
+          </p>
+        </div>
+        <Tabs defaultValue={Object.keys(dependentTrends)[0]}>
+          <TabsList className="rounded-full">
+            {Object.keys(dependentTrends).map((name) => (
+              <TabsTrigger key={name} value={name} className="rounded-full">
+                {name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {Object.entries(dependentTrends).map(([name, data]) => (
+            <TabsContent key={name} value={name} className="mt-4">
+              <MoodActivityChart
+                data={data}
+                title={`${name} · 14-day trend`}
+                subtitle="Higher activity & full meds correlate with better mood."
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
       </section>
 
       <section>
