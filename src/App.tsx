@@ -7,6 +7,9 @@ import AppLayout from "./components/AppLayout";
 import Index from "./pages/Index.tsx";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import GuardianPortal from "./pages/GuardianPortal";
+import Journal from "./pages/Journal";
+import Games from "./pages/Games";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -18,8 +21,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<Index />} />
+            <Route path="/journal" element={<Journal />} />
+            <Route path="/games" element={<Games />} />
             <Route path="/doctor" element={<DoctorDashboard />} />
             <Route path="/guardian" element={<GuardianPortal />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

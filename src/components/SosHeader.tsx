@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Phone, ShieldAlert } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { LogOut, Phone, ShieldAlert } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,22 +16,30 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", label: "Patient" },
+  { to: "/journal", label: "Journal" },
+  { to: "/games", label: "Games" },
   { to: "/doctor", label: "Doctor" },
   { to: "/guardian", label: "Guardian" },
 ];
 
 export const SosHeader = () => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth", { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="container flex h-16 items-center justify-between gap-3">
         <NavLink to="/" className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-bloom text-primary-foreground shadow-soft">
-            <span className="font-display text-lg">M</span>
+            <span className="font-display text-lg">U</span>
           </span>
           <span className="font-display text-xl font-semibold tracking-tight text-foreground">
-            Mentall
+            Upward Spiral
           </span>
         </NavLink>
 
@@ -54,6 +63,7 @@ export const SosHeader = () => {
           ))}
         </nav>
 
+        <div className="flex items-center gap-2">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
@@ -100,6 +110,16 @@ export const SosHeader = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleSignOut}
+          aria-label="Sign out"
+          className="rounded-full"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
+        </div>
       </div>
     </header>
   );
