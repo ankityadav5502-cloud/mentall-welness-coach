@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", label: "Patient" },
+  { to: "/journal", label: "Journal" },
+  { to: "/games", label: "Games" },
   { to: "/doctor", label: "Doctor" },
   { to: "/guardian", label: "Guardian" },
 ];
@@ -27,10 +29,10 @@ export const SosHeader = () => {
       <div className="container flex h-16 items-center justify-between gap-3">
         <NavLink to="/" className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-bloom text-primary-foreground shadow-soft">
-            <span className="font-display text-lg">M</span>
+            <span className="font-display text-lg">U</span>
           </span>
           <span className="font-display text-xl font-semibold tracking-tight text-foreground">
-            Mentall
+            Upward Spiral
           </span>
         </NavLink>
 

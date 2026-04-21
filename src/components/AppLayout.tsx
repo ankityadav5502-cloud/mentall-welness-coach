@@ -9,7 +9,7 @@ export const AppLayout = () => {
         <Outlet />
       </main>
       <footer className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-        Mentall Wellness Coach · Built with care for India ·{" "}
+        Upward Spiral · Built with care for India ·{" "}
         <span className="font-medium">Tele MANAS 14416</span>
       </footer>
     </div>
