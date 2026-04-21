@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Phone, ShieldAlert } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { LogOut, Phone, ShieldAlert } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +24,12 @@ const navItems = [
 
 export const SosHeader = () => {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth", { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -56,6 +63,7 @@ export const SosHeader = () => {
           ))}
         </nav>
 
+        <div className="flex items-center gap-2">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
@@ -102,6 +110,16 @@ export const SosHeader = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleSignOut}
+          aria-label="Sign out"
+          className="rounded-full"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
+        </div>
       </div>
     </header>
   );
