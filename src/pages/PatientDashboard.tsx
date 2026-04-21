@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import MoodLogger from "@/components/MoodLogger";
 import DopamineScheduler from "@/components/DopamineScheduler";
 import VirtualCompanion from "@/components/VirtualCompanion";
-import { seedDopamineTasks } from "@/lib/mockData";
+import MoodActivityChart from "@/components/MoodActivityChart";
+import { seedDopamineTasks, moodActivityTrend } from "@/lib/mockData";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookHeart, Gamepad2 } from "lucide-react";
 
@@ -31,6 +32,14 @@ const PatientDashboard = () => {
 
       <section>
         <DopamineScheduler onProgressChange={setBloomRatio} />
+      </section>
+
+      <section>
+        <MoodActivityChart
+          data={moodActivityTrend}
+          title="Your upward spiral"
+          subtitle="Last 14 days — mood rises with activity & medication."
+        />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
