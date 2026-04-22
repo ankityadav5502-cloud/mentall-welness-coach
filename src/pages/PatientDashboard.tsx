@@ -6,7 +6,7 @@ import VirtualCompanion from "@/components/VirtualCompanion";
 import MoodActivityChart from "@/components/MoodActivityChart";
 import { moodActivityTrend } from "@/lib/mockData";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookHeart, Gamepad2 } from "lucide-react";
+import { BookHeart, Gamepad2, Stethoscope, Pill, UserCheck } from "lucide-react";
 
 const PatientDashboard = () => {
   const [bloomRatio, setBloomRatio] = useState(0);
@@ -37,6 +37,55 @@ const PatientDashboard = () => {
           title="Your upward spiral"
           subtitle="Last 14 days — mood rises with activity & medication."
         />
+      </section>
+
+      {/* Doctor & Medication cards — placed after the chart for best engagement */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <Link to="/find-doctor" className="group">
+          <Card className="border-border/60 shadow-card transition-all group-hover:shadow-soft group-hover:-translate-y-0.5">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                <Stethoscope className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="font-display text-lg font-semibold">Find a Doctor</p>
+                <p className="text-sm text-muted-foreground">
+                  Browse verified psychiatrists.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/my-doctor" className="group">
+          <Card className="border-border/60 shadow-card transition-all group-hover:shadow-soft group-hover:-translate-y-0.5">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-success/10 text-success">
+                <UserCheck className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="font-display text-lg font-semibold">My Doctor</p>
+                <p className="text-sm text-muted-foreground">
+                  Chat & manage privacy settings.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/medications" className="group">
+          <Card className="border-border/60 shadow-card transition-all group-hover:shadow-soft group-hover:-translate-y-0.5">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-warning/10 text-warning-foreground">
+                <Pill className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="font-display text-lg font-semibold">Medications</p>
+                <p className="text-sm text-muted-foreground">
+                  Track your daily medicines.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">

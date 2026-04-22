@@ -11,6 +11,10 @@ import Journal from "./pages/Journal";
 import Games from "./pages/Games";
 import Auth from "./pages/Auth";
 import OnboardingRole from "./pages/OnboardingRole";
+import FindDoctor from "./pages/FindDoctor";
+import MyDoctor from "./pages/MyDoctor";
+import ChatRoom from "./pages/ChatRoom";
+import Medications from "./pages/Medications";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -30,6 +34,10 @@ const App = () => (
             <Route path="/games" element={<Games />} />
             <Route path="/doctor" element={<DoctorDashboard />} />
             <Route path="/guardian" element={<GuardianPortal />} />
+            <Route path="/find-doctor" element={<FindDoctor />} />
+            <Route path="/my-doctor" element={<MyDoctor />} />
+            <Route path="/chat/:roomId" element={<ChatRoom />} />
+            <Route path="/medications" element={<Medications />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Route>
@@ -40,3 +48,4 @@ const App = () => (
 );
 
 export default App;
+
