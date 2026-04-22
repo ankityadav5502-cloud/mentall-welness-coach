@@ -2,8 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-<<<<<<< HEAD
-=======
 import {
   Tabs,
   TabsContent,
@@ -12,7 +10,6 @@ import {
 } from "@/components/ui/tabs";
 import MoodActivityChart from "@/components/MoodActivityChart";
 import { aiScribeSummary, abdmStats, patientTrends } from "@/lib/mockData";
->>>>>>> 8b5d93f2a4838c84a62fbb099acfbd847edf6533
 import { Activity, FileCheck2, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";

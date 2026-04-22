@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
-import { burnoutResources } from "@/lib/mockData";
-=======
 import {
   Tabs,
   TabsContent,
@@ -13,7 +10,6 @@ import {
 } from "@/components/ui/tabs";
 import MoodActivityChart from "@/components/MoodActivityChart";
 import { dependents, burnoutResources, dependentTrends } from "@/lib/mockData";
->>>>>>> 8b5d93f2a4838c84a62fbb099acfbd847edf6533
 import { cn } from "@/lib/utils";
 import { Heart, Headphones, BookOpen, PhoneCall } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
