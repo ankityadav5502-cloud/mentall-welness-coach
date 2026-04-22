@@ -8,50 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Modern Zen palette: Indigo #818CF8, Teal #2DD4BF, Amber #FBBF24, White */
-    --background: 0 0% 100%;             /* Pure White */
-    --foreground: 234 25% 18%;           /* Deep indigo-tinted text */
+    /* Electric Spring palette: Lime #A3E635, Sky Blue #60A5FA, Magenta #F472B6, Cool White */
+    --background: 210 40% 98%;           /* Cool White #F8FAFC */
+    --foreground: 222 47% 15%;           /* Deep slate text */
 
     --card: 0 0% 100%;
-    --card-foreground: 234 25% 18%;
+    --card-foreground: 222 47% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 234 25% 18%;
+    --popover-foreground: 222 47% 15%;
 
-    --primary: 234 89% 74%;              /* Soft Indigo/Iris #818CF8 */
-    --primary-foreground: 0 0% 100%;
+    --primary: 84 76% 56%;               /* Bright Lime/Pear #A3E635 */
+    --primary-foreground: 222 47% 12%;
 
-    --secondary: 172 66% 50%;            /* Bright Teal/Mint #2DD4BF */
-    --secondary-foreground: 234 30% 15%;
+    --secondary: 213 94% 68%;            /* Sky Blue #60A5FA */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 30% 96%;
-    --muted-foreground: 234 12% 45%;
+    --muted: 210 30% 95%;
+    --muted-foreground: 222 15% 42%;
 
-    --accent: 43 96% 56%;                /* Amber/Gold #FBBF24 */
-    --accent-foreground: 234 30% 15%;
+    --accent: 328 86% 70%;               /* Soft Magenta #F472B6 */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 172 66% 45%;
+    --success: 84 76% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 43 96% 56%;
-    --warning-foreground: 234 30% 15%;
-    --sage: 172 66% 50%;                 /* Teal (kept token name for compat) */
-    --sage-foreground: 234 30% 15%;
-    --cream: 0 0% 100%;
-    --slate-blue: 234 89% 74%;           /* Indigo (kept token name for compat) */
+    --warning: 328 86% 70%;
+    --warning-foreground: 0 0% 100%;
+    --sage: 84 76% 56%;                  /* Lime (kept token name for compat) */
+    --sage-foreground: 222 47% 12%;
+    --cream: 210 40% 98%;
+    --slate-blue: 213 94% 68%;           /* Sky Blue (kept token name for compat) */
 
-    --border: 220 20% 90%;
-    --input: 220 20% 90%;
-    --ring: 234 89% 74%;
+    --border: 214 25% 88%;
+    --input: 214 25% 88%;
+    --ring: 213 94% 68%;
 
     --radius: 1rem;
 
-    --gradient-calm: linear-gradient(135deg, hsl(234 89% 94%), hsl(172 66% 92%));
-    --gradient-bloom: linear-gradient(160deg, hsl(234 89% 74%), hsl(172 66% 50%));
-    --shadow-soft: 0 8px 30px -12px hsl(234 50% 30% / 0.20);
-    --shadow-card: 0 4px 20px -8px hsl(234 50% 30% / 0.14);
+    --gradient-calm: linear-gradient(135deg, hsl(84 76% 90%), hsl(213 94% 92%));
+    --gradient-bloom: linear-gradient(160deg, hsl(84 76% 56%), hsl(213 94% 68%));
+    --shadow-soft: 0 8px 30px -12px hsl(213 60% 30% / 0.20);
+    --shadow-card: 0 4px 20px -8px hsl(213 60% 30% / 0.14);
 
     --sidebar-background: 0 0% 98%;
 
@@ -71,33 +71,33 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 234 30% 10%;
-    --foreground: 220 30% 96%;
-    --card: 234 28% 14%;
-    --card-foreground: 220 30% 96%;
-    --popover: 234 28% 14%;
-    --popover-foreground: 220 30% 96%;
-    --primary: 234 89% 74%;
-    --primary-foreground: 234 30% 12%;
-    --secondary: 172 66% 50%;
-    --secondary-foreground: 234 30% 12%;
-    --muted: 234 18% 20%;
-    --muted-foreground: 220 20% 72%;
-    --accent: 43 96% 56%;
-    --accent-foreground: 234 30% 12%;
+    --background: 222 47% 10%;
+    --foreground: 210 40% 96%;
+    --card: 222 40% 14%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 40% 14%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 84 76% 56%;
+    --primary-foreground: 222 47% 12%;
+    --secondary: 213 94% 68%;
+    --secondary-foreground: 222 47% 12%;
+    --muted: 222 25% 20%;
+    --muted-foreground: 210 20% 72%;
+    --accent: 328 86% 70%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
-    --success: 172 66% 50%;
-    --success-foreground: 0 0% 100%;
-    --warning: 43 96% 56%;
-    --warning-foreground: 234 30% 12%;
-    --sage: 172 66% 50%;
-    --sage-foreground: 234 30% 12%;
-    --cream: 0 0% 100%;
-    --slate-blue: 234 89% 74%;
-    --border: 234 18% 24%;
-    --input: 234 18% 24%;
-    --ring: 234 89% 74%;
+    --success: 84 76% 50%;
+    --success-foreground: 222 47% 12%;
+    --warning: 328 86% 70%;
+    --warning-foreground: 0 0% 100%;
+    --sage: 84 76% 56%;
+    --sage-foreground: 222 47% 12%;
+    --cream: 210 40% 98%;
+    --slate-blue: 213 94% 68%;
+    --border: 222 25% 24%;
+    --input: 222 25% 24%;
+    --ring: 213 94% 68%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
