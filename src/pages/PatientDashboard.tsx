@@ -4,7 +4,7 @@ import MoodLogger from "@/components/MoodLogger";
 import DopamineScheduler from "@/components/DopamineScheduler";
 import VirtualCompanion from "@/components/VirtualCompanion";
 import MoodActivityChart from "@/components/MoodActivityChart";
-import { seedDopamineTasks, moodActivityTrend } from "@/lib/mockData";
+import { moodActivityTrend } from "@/lib/mockData";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookHeart, Gamepad2 } from "lucide-react";
 
