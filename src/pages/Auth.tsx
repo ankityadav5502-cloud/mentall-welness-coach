@@ -21,7 +21,7 @@ const Auth = () => {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       if (!session) return;
       if (session.user.is_anonymous) {
-        navigate("/", { replace: true });
+        navigate("/onboarding", { replace: true });
         return;
       }
       void getCurrentUserRoles()
@@ -31,7 +31,7 @@ const Auth = () => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return;
       if (data.session.user.is_anonymous) {
-        navigate("/", { replace: true });
+        navigate("/onboarding", { replace: true });
         return;
       }
       void getCurrentUserRoles()

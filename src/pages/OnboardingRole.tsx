@@ -133,7 +133,7 @@ const OnboardingRole = () => {
         const { data: profile } = await (supabase as any)
           .from("profiles")
           .select("onboarding_completed")
-          .eq("user_id", session.user.id)
+          .eq("id", session.user.id)
           .maybeSingle();
         if (profile?.onboarding_completed) {
           navigate(getDefaultRouteForRoles(roles), { replace: true });
