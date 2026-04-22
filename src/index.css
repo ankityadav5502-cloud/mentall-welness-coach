@@ -8,50 +8,50 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Calm Tech palette: Sage Green #B2AC88, Soft Cream #FAF6EC, Slate Blue #5A6B82 */
-    --background: 44 50% 95%;            /* Soft Cream */
-    --foreground: 215 20% 22%;           /* Deep slate text */
+    /* Golden Hour palette: Marigold #FFB347, Pale Sunlight #FCEBB6, Coral #FF8C61, Warm Cream #FFF9F0 */
+    --background: 38 100% 97%;           /* Warm Cream #FFF9F0 */
+    --foreground: 25 35% 18%;            /* Warm deep brown text */
 
-    --card: 44 60% 98%;
-    --card-foreground: 215 20% 22%;
+    --card: 38 100% 99%;
+    --card-foreground: 25 35% 18%;
 
-    --popover: 44 60% 98%;
-    --popover-foreground: 215 20% 22%;
+    --popover: 38 100% 99%;
+    --popover-foreground: 25 35% 18%;
 
-    --primary: 215 18% 43%;              /* Slate Blue */
-    --primary-foreground: 44 60% 97%;
+    --primary: 33 100% 64%;              /* Soft Amber/Marigold #FFB347 */
+    --primary-foreground: 25 45% 15%;
 
-    --secondary: 52 19% 62%;             /* Sage Green */
-    --secondary-foreground: 215 25% 18%;
+    --secondary: 46 92% 85%;             /* Pale Sunlight #FCEBB6 */
+    --secondary-foreground: 25 45% 18%;
 
-    --muted: 44 30% 90%;
-    --muted-foreground: 215 12% 42%;
+    --muted: 40 60% 92%;
+    --muted-foreground: 25 20% 40%;
 
-    --accent: 52 22% 78%;                /* Light sage */
-    --accent-foreground: 215 25% 18%;
+    --accent: 16 100% 69%;               /* Coral Pink #FF8C61 */
+    --accent-foreground: 25 45% 15%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
     --success: 140 38% 42%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 85% 55%;
-    --warning-foreground: 215 25% 18%;
-    --sage: 52 19% 62%;
-    --sage-foreground: 215 25% 18%;
-    --cream: 44 50% 95%;
-    --slate-blue: 215 18% 43%;
+    --warning: 33 100% 64%;
+    --warning-foreground: 25 45% 15%;
+    --sage: 46 92% 85%;                  /* Pale Sunlight (kept token name for compat) */
+    --sage-foreground: 25 45% 18%;
+    --cream: 38 100% 97%;                /* Warm Cream */
+    --slate-blue: 16 100% 69%;           /* Coral (kept token name for compat) */
 
-    --border: 52 15% 80%;
-    --input: 52 15% 80%;
-    --ring: 215 18% 43%;
+    --border: 38 50% 86%;
+    --input: 38 50% 86%;
+    --ring: 33 100% 64%;
 
     --radius: 1rem;
 
-    --gradient-calm: linear-gradient(135deg, hsl(52 22% 82%), hsl(44 50% 95%));
-    --gradient-bloom: linear-gradient(160deg, hsl(52 28% 70%), hsl(140 25% 55%));
-    --shadow-soft: 0 8px 30px -12px hsl(215 20% 30% / 0.18);
-    --shadow-card: 0 4px 20px -8px hsl(215 20% 30% / 0.12);
+    --gradient-calm: linear-gradient(135deg, hsl(46 92% 88%), hsl(38 100% 97%));
+    --gradient-bloom: linear-gradient(160deg, hsl(33 100% 70%), hsl(16 100% 69%));
+    --shadow-soft: 0 8px 30px -12px hsl(25 60% 30% / 0.20);
+    --shadow-card: 0 4px 20px -8px hsl(25 60% 30% / 0.14);
 
     --sidebar-background: 0 0% 98%;
 
