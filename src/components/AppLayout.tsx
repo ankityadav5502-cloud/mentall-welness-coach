@@ -55,25 +55,8 @@ export const AppLayout = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Anonymous users are treated as guest patients and should not be forced
-  // through role onboarding.
-  if (session.user.is_anonymous) {
-    if (location.pathname === "/doctor" || location.pathname === "/guardian") {
-      return <Navigate to="/" replace />;
-    }
-    return (
-      <div className="min-h-screen bg-background font-sans text-foreground">
-        <SosHeader />
-        <main className="container py-8 md:py-12">
-          <Outlet />
-        </main>
-        <footer className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-          Upward Spiral · Built with care for India ·{" "}
-          <span className="font-medium">Tele MANAS 14416</span>
-        </footer>
-      </div>
-    );
-  }
+  // Anonymous users should also go through onboarding to select their role.
+  // After onboarding, they proceed like any other user.
 
   if (rolesLoading) {
     return (
