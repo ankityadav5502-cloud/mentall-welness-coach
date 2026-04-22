@@ -2,6 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+<<<<<<< HEAD
+=======
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import MoodActivityChart from "@/components/MoodActivityChart";
+import { aiScribeSummary, abdmStats, patientTrends } from "@/lib/mockData";
+>>>>>>> 8b5d93f2a4838c84a62fbb099acfbd847edf6533
 import { Activity, FileCheck2, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,6 +151,33 @@ const DoctorDashboard = () => {
             Govt. incentive: {incentiveTier}
           </Badge>
         </Card>
+      </section>
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="font-display text-xl font-semibold">Patient mood × activity</h2>
+          <p className="text-sm text-muted-foreground">
+            Compare mood trajectory against daily activity and medication adherence.
+          </p>
+        </div>
+        <Tabs defaultValue={Object.keys(patientTrends)[0]}>
+          <TabsList className="rounded-full">
+            {Object.keys(patientTrends).map((name) => (
+              <TabsTrigger key={name} value={name} className="rounded-full">
+                {name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {Object.entries(patientTrends).map(([name, data]) => (
+            <TabsContent key={name} value={name} className="mt-4">
+              <MoodActivityChart
+                data={data}
+                title={`${name} · 14-day trend`}
+                subtitle="Mood (left axis) vs. activity & meds (right axis)."
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
       </section>
     </div>
   );

@@ -27,3 +27,53 @@ export const burnoutResources = [
     tag: "Helpline",
   },
 ];
+
+// 14-day trend: mood score (1–5) vs activity score (0–100).
+// Activity = % of dopamine tasks done + medication adherence + journaling/games engagement.
+// TODO(backend): Replace with aggregated query from moods + dopamine_tasks + journal_entries + medication_logs.
+export type MoodActivityPoint = {
+  day: string;     // short label e.g. "Mon" or "12 Apr"
+  mood: number;    // 1–5
+  activity: number;// 0–100
+  meds: number;    // 0–100 adherence %
+};
+
+export const moodActivityTrend: MoodActivityPoint[] = [
+  { day: "Apr 8",  mood: 2, activity: 25, meds: 50 },
+  { day: "Apr 9",  mood: 2, activity: 30, meds: 60 },
+  { day: "Apr 10", mood: 3, activity: 45, meds: 80 },
+  { day: "Apr 11", mood: 3, activity: 55, meds: 100 },
+  { day: "Apr 12", mood: 2, activity: 35, meds: 60 },
+  { day: "Apr 13", mood: 3, activity: 60, meds: 100 },
+  { day: "Apr 14", mood: 4, activity: 70, meds: 100 },
+  { day: "Apr 15", mood: 4, activity: 75, meds: 100 },
+  { day: "Apr 16", mood: 3, activity: 50, meds: 80 },
+  { day: "Apr 17", mood: 4, activity: 80, meds: 100 },
+  { day: "Apr 18", mood: 5, activity: 85, meds: 100 },
+  { day: "Apr 19", mood: 4, activity: 70, meds: 100 },
+  { day: "Apr 20", mood: 5, activity: 90, meds: 100 },
+  { day: "Apr 21", mood: 5, activity: 95, meds: 100 },
+];
+
+// Per-patient trends for doctor view.
+export const patientTrends: Record<string, MoodActivityPoint[]> = {
+  "Aarav S.": moodActivityTrend,
+  "Priya K.": moodActivityTrend.map((p) => ({
+    ...p,
+    mood: Math.min(5, p.mood + 1),
+    activity: Math.min(100, p.activity + 5),
+  })),
+  "Rohan M.": moodActivityTrend.map((p, i) => ({
+    ...p,
+    mood: Math.max(1, p.mood - 1),
+    activity: Math.max(10, p.activity - 25),
+    meds: Math.max(20, p.meds - 40 + (i % 3) * 10),
+  })),
+};
+
+// Per-dependent trends for guardian view.
+export const dependentTrends: Record<string, MoodActivityPoint[]> = {
+  "Aarav (son)": patientTrends["Aarav S."],
+  "Mom": patientTrends["Priya K."].map((p) => ({ ...p, mood: Math.max(1, p.mood - 1) })),
+  "Riya (daughter)": patientTrends["Rohan M."],
+};
