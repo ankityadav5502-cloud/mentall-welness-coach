@@ -9,7 +9,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import MoodActivityChart from "@/components/MoodActivityChart";
-import { aiScribeSummary, abdmStats, patientTrends } from "@/lib/mockData";
+import { patientTrends } from "@/lib/mockData";
 import { Activity, FileCheck2, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";

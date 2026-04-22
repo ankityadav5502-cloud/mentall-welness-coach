@@ -9,7 +9,7 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import MoodActivityChart from "@/components/MoodActivityChart";
-import { dependents, burnoutResources, dependentTrends } from "@/lib/mockData";
+import { burnoutResources, dependentTrends } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { Heart, Headphones, BookOpen, PhoneCall } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
