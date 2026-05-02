@@ -189,14 +189,14 @@ const OnboardingRole = () => {
         .from("profiles")
         .upsert(
           {
-            user_id: user.id,
+            id: user.id,
             display_name: basic.display_name.trim(),
             phone: basic.phone?.trim() || null,
             date_of_birth: basic.date_of_birth || null,
             gender: basic.gender ?? null,
             onboarding_completed: true,
           },
-          { onConflict: "user_id" }
+          { onConflict: "id" }
         );
       if (profileError) throw profileError;
 
@@ -205,38 +205,38 @@ const OnboardingRole = () => {
         const yrs = doctorForm.years_of_experience.trim();
         const { error } = await (supabase as any).from("doctor_profiles").upsert(
           {
-            user_id: user.id,
+            id: user.id,
             license_number: doctorForm.license_number.trim() || null,
             specialization: doctorForm.specialization.trim() || null,
             hospital_name: doctorForm.hospital_name.trim() || null,
             years_of_experience: yrs ? parseInt(yrs, 10) : null,
           },
-          { onConflict: "user_id" }
+          { onConflict: "id" }
         );
         if (error) throw error;
       } else if (role === "guardian") {
         const age = guardianForm.dependent_age.trim();
         const { error } = await (supabase as any).from("guardian_profiles").upsert(
           {
-            user_id: user.id,
+            id: user.id,
             dependent_name: guardianForm.dependent_name.trim() || null,
             dependent_age: age ? parseInt(age, 10) : null,
             dependent_relationship: guardianForm.dependent_relationship.trim() || null,
             emergency_contact: guardianForm.emergency_contact.trim() || null,
           },
-          { onConflict: "user_id" }
+          { onConflict: "id" }
         );
         if (error) throw error;
       } else {
         const { error } = await (supabase as any).from("patient_profiles").upsert(
           {
-            user_id: user.id,
+            id: user.id,
             conditions: patientForm.conditions.trim() || null,
             current_medications: patientForm.current_medications.trim() || null,
             therapy_history: patientForm.therapy_history.trim() || null,
             emergency_contact: patientForm.emergency_contact.trim() || null,
           },
-          { onConflict: "user_id" }
+          { onConflict: "id" }
         );
         if (error) throw error;
       }
