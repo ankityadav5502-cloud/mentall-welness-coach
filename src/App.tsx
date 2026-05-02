@@ -15,6 +15,7 @@ import FindDoctor from "./pages/FindDoctor";
 import MyDoctor from "./pages/MyDoctor";
 import ChatRoom from "./pages/ChatRoom";
 import Medications from "./pages/Medications";
+import AiChat from "./pages/AiChat";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/my-doctor" element={<MyDoctor />} />
             <Route path="/chat/:roomId" element={<ChatRoom />} />
             <Route path="/medications" element={<Medications />} />
+            <Route path="/ai-chat" element={<AiChat />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Route>

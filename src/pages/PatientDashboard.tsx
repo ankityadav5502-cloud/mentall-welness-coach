@@ -6,7 +6,7 @@ import VirtualCompanion from "@/components/VirtualCompanion";
 import MoodActivityChart from "@/components/MoodActivityChart";
 import { moodActivityTrend } from "@/lib/mockData";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookHeart, Gamepad2, Stethoscope, Pill, UserCheck } from "lucide-react";
+import { BookHeart, Gamepad2, Stethoscope, Pill, UserCheck, Brain } from "lucide-react";
 
 const PatientDashboard = () => {
   const [bloomRatio, setBloomRatio] = useState(0);
@@ -40,7 +40,22 @@ const PatientDashboard = () => {
       </section>
 
       {/* Doctor & Medication cards — placed after the chart for best engagement */}
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Link to="/ai-chat" className="group md:col-span-2 lg:col-span-1">
+          <Card className="border-emerald-200/60 bg-gradient-to-br from-emerald-50/50 to-teal-50/30 shadow-card transition-all group-hover:shadow-soft group-hover:-translate-y-0.5 dark:border-emerald-800/40 dark:from-emerald-950/20 dark:to-teal-950/10">
+            <CardContent className="flex items-center gap-4 p-5">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white">
+                <Brain className="h-6 w-6" />
+              </span>
+              <div>
+                <p className="font-display text-lg font-semibold">Ask Sage 🧠</p>
+                <p className="text-sm text-muted-foreground">
+                  AI wellness companion — ask anything.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
         <Link to="/find-doctor" className="group">
           <Card className="border-border/60 shadow-card transition-all group-hover:shadow-soft group-hover:-translate-y-0.5">
             <CardContent className="flex items-center gap-4 p-5">

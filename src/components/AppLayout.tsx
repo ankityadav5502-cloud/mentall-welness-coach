@@ -75,7 +75,7 @@ export const AppLayout = () => {
   if (location.pathname === "/guardian" && !roles.includes("guardian")) {
     return <Navigate to={defaultRoute} replace />;
   }
-  const patientPaths = ["/", "/journal", "/games", "/find-doctor", "/my-doctor", "/chat", "/medications"];
+  const patientPaths = ["/", "/journal", "/games", "/find-doctor", "/my-doctor", "/chat", "/medications", "/ai-chat"];
   if (patientPaths.some((p) => location.pathname === p || location.pathname.startsWith(p + "/")) && !roles.includes("patient")) {
     return <Navigate to={defaultRoute} replace />;
   }
