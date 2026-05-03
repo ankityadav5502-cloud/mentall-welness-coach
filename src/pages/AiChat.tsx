@@ -186,7 +186,7 @@ const AiChat = () => {
                   const newMsgs = [...prev];
                   const lastMsg = newMsgs[newMsgs.length - 1];
                   if (lastMsg && lastMsg.role === "assistant") {
-                    lastMsg.sources = data.sources;
+                    newMsgs[newMsgs.length - 1] = { ...lastMsg, sources: data.sources };
                   }
                   return newMsgs;
                 });
@@ -197,7 +197,7 @@ const AiChat = () => {
                   const newMsgs = [...prev];
                   const lastMsg = newMsgs[newMsgs.length - 1];
                   if (lastMsg && lastMsg.role === "assistant") {
-                    lastMsg.content = currentReply;
+                    newMsgs[newMsgs.length - 1] = { ...lastMsg, content: currentReply };
                   }
                   return newMsgs;
                 });
@@ -366,7 +366,7 @@ const AiChat = () => {
                         : "bg-muted/60 text-foreground rounded-bl-md"
                     }`}
                   >
-                    {msg.content.split("\n").map((line, i) => (
+                    {(msg.content || "").split("\n").map((line, i) => (
                       <p key={i} className={i > 0 ? "mt-2" : ""}>
                         {line}
                       </p>
