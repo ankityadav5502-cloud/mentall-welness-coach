@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
     }
     if (moods?.length) {
       ctx.push("\n=== MOOD TREND (7 days) ===");
-      moods.forEach((m: any) => ctx.push(`${m.created_at.slice(0,10)}: ${m.emoji} ${m.value}/5${m.note ? ` "${m.note}"` : ""}`));
+      moods.forEach((m: any) => ctx.push(`${m.created_at.slice(0,10)}: ${m.emoji} ${m.value}/5${m.note ? ' "' + m.note + '"' : ""}`));
       ctx.push(`Avg: ${(moods.reduce((s: number, m: any) => s + m.value, 0) / moods.length).toFixed(1)}/5`);
     }
     if (meds?.length) {
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
 
     const ctxBlock = ctx.length ? `\n\n--- CONTEXT ---\n${ctx.join("\n")}\n--- END ---` : "\n\n(New user, no data yet.)";
 
-    // 7. Call OpenAI
+    // 7. Call OpenAI with STREAM = true
     const msgs: any[] = [{ role: "system", content: SYSTEM_PROMPT + ctxBlock }];
     if (history?.length) history.forEach((m: any) => msgs.push({ role: m.role, content: m.content }));
     msgs.push({ role: "user", content: message });
@@ -117,42 +117,89 @@ Deno.serve(async (req) => {
     const aiResp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${openaiApiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "gpt-4.1-mini", messages: msgs, temperature: 0.7, max_tokens: 1000 }),
+      body: JSON.stringify({ model: "gpt-4.1-mini", messages: msgs, temperature: 0.7, max_tokens: 1000, stream: true }),
     });
+
     if (!aiResp.ok) throw new Error(`OpenAI error: ${await aiResp.text()}`);
-    const aiJson = await aiResp.json();
-    const reply = aiJson.choices?.[0]?.message?.content ?? "I couldn't generate a response.";
 
-    // 8. Save messages
-    await supabase.from("ai_chat_messages").insert([
-      { session_id: sid, role: "user", content: message },
-      { session_id: sid, role: "assistant", content: reply },
-    ]);
+    // Generate title if new session
+    const titlePromise = !sessionId ? fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${openaiApiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini", temperature: 0.5, max_tokens: 20,
+        messages: [
+          { role: "system", content: "Generate a 3-6 word title. Return ONLY the title." },
+          { role: "user", content: message },
+        ],
+      }),
+    }).then(res => res.json()).then(json => json.choices?.[0]?.message?.content?.trim()) : Promise.resolve(undefined);
 
-    // 9. Title for new sessions
-    let title: string | undefined;
-    if (!sessionId) {
-      const tResp = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${openaiApiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "gpt-4.1-mini", temperature: 0.5, max_tokens: 20,
-          messages: [
-            { role: "system", content: "Generate a 3-6 word title. Return ONLY the title." },
-            { role: "user", content: message },
-          ],
-        }),
-      });
-      if (tResp.ok) {
-        title = (await tResp.json()).choices?.[0]?.message?.content?.trim() ?? "New conversation";
-        await supabase.from("ai_chat_sessions").update({ title, updated_at: new Date().toISOString() }).eq("id", sid);
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    let fullReply = "";
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const title = await titlePromise;
+          if (!sessionId && title) {
+            await supabase.from("ai_chat_sessions").update({ title, updated_at: new Date().toISOString() }).eq("id", sid);
+          } else {
+            await supabase.from("ai_chat_sessions").update({ updated_at: new Date().toISOString() }).eq("id", sid);
+          }
+
+          // Send metadata first
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', sessionId: sid, title })}\n\n`));
+
+          // Stream chunks from OpenAI
+          const reader = aiResp.body?.getReader();
+          if (reader) {
+            let buffer = "";
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              // Keep the last incomplete line in the buffer
+              buffer = lines.pop() || "";
+              
+              for (const line of lines) {
+                if (line.startsWith("data: ") && line !== "data: [DONE]") {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    const text = data.choices[0]?.delta?.content || "";
+                    if (text) {
+                      fullReply += text;
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'text', text })}\n\n`));
+                    }
+                  } catch (e) {
+                    // Ignore parse errors on chunks
+                  }
+                }
+              }
+            }
+          }
+          
+          // Save to database
+          await supabase.from("ai_chat_messages").insert([
+            { session_id: sid, role: "user", content: message },
+            { session_id: sid, role: "assistant", content: fullReply },
+          ]);
+
+          controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+        } catch (err) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', error: (err as Error).message })}\n\n`));
+        } finally {
+          controller.close();
+        }
       }
-    } else {
-      await supabase.from("ai_chat_sessions").update({ updated_at: new Date().toISOString() }).eq("id", sid);
-    }
+    });
 
-    return new Response(JSON.stringify({ sessionId: sid, reply, title }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200,
+    return new Response(stream, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
+      status: 200,
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: (error as Error).message }), {

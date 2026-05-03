@@ -101,54 +101,110 @@ const AiChat = () => {
     setMessages((prev) => [...prev, tempUserMsg]);
     setLoading(true);
 
+    let streamBuffer = ""; // buffer for incomplete chunks
+
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const resp = await supabase.functions.invoke("ai-chat", {
-        body: { sessionId: activeSession, message: msg },
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const resp = await fetch(`${supabaseUrl}/functions/v1/ai-chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ sessionId: activeSession, message: msg }),
       });
 
-      if (resp.error) throw resp.error;
-      const data = resp.data as { sessionId: string; reply: string; title?: string };
-
-      // If new session was created, update state
-      if (!activeSession) {
-        setActiveSession(data.sessionId);
-        setSessions((prev) => [
-          {
-            id: data.sessionId,
-            title: data.title || "New conversation",
-            updated_at: new Date().toISOString(),
-          },
-          ...prev,
-        ]);
-      } else {
-        // Update session timestamp in sidebar
-        setSessions((prev) =>
-          prev.map((s) =>
-            s.id === activeSession
-              ? { ...s, updated_at: new Date().toISOString() }
-              : s
-          )
-        );
+      if (!resp.ok) {
+        const errText = await resp.text();
+        throw new Error(errText || "Failed to get response");
       }
 
-      // Add assistant reply
-      const assistantMsg: ChatMessage = {
-        id: `resp-${Date.now()}`,
-        role: "assistant",
-        content: data.reply,
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+      setLoading(false); // remove the thinking spinner since stream is starting
+
+      const reader = resp.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+      if (!reader) throw new Error("No readable stream");
+
+      let isFirstMetadata = true;
+      let currentReply = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        streamBuffer += chunk;
+        const lines = streamBuffer.split("\n");
+        // Keep the last incomplete line in the buffer
+        streamBuffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ") && line !== "data: [DONE]") {
+            try {
+              const data = JSON.parse(line.slice(6));
+              
+              if (data.type === 'metadata') {
+                if (isFirstMetadata) {
+                  if (!activeSession) {
+                    setActiveSession(data.sessionId);
+                    setSessions((prev) => [
+                      {
+                        id: data.sessionId,
+                        title: data.title || "New conversation",
+                        updated_at: new Date().toISOString(),
+                      },
+                      ...prev,
+                    ]);
+                  } else {
+                    setSessions((prev) =>
+                      prev.map((s) =>
+                        s.id === activeSession
+                          ? { ...s, updated_at: new Date().toISOString() }
+                          : s
+                      )
+                    );
+                  }
+                  
+                  // Create empty assistant message container
+                  const assistantMsg: ChatMessage = {
+                    id: `resp-${Date.now()}`,
+                    role: "assistant",
+                    content: "",
+                    created_at: new Date().toISOString(),
+                  };
+                  setMessages((prev) => [...prev, assistantMsg]);
+                  isFirstMetadata = false;
+                }
+              } else if (data.type === 'text') {
+                currentReply += data.text;
+                // Update the last message
+                setMessages((prev) => {
+                  const newMsgs = [...prev];
+                  const lastMsg = newMsgs[newMsgs.length - 1];
+                  if (lastMsg && lastMsg.role === "assistant") {
+                    lastMsg.content = currentReply;
+                  }
+                  return newMsgs;
+                });
+              } else if (data.type === 'error') {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              // Ignore partial JSON parsing errors
+            }
+          }
+        }
+      }
     } catch (err: any) {
       toast.error("Failed to get response", {
         description: err.message || "Please try again",
       });
-      // Remove optimistic message on error
+      // Remove optimistic message on error if it's just the user's msg
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
     } finally {
       setLoading(false);
