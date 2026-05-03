@@ -22,6 +22,7 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  sources?: { title: string; category: string }[];
 }
 
 interface ChatSession {
@@ -180,6 +181,15 @@ const AiChat = () => {
                   setMessages((prev) => [...prev, assistantMsg]);
                   isFirstMetadata = false;
                 }
+              } else if (data.type === 'sources') {
+                setMessages((prev) => {
+                  const newMsgs = [...prev];
+                  const lastMsg = newMsgs[newMsgs.length - 1];
+                  if (lastMsg && lastMsg.role === "assistant") {
+                    lastMsg.sources = data.sources;
+                  }
+                  return newMsgs;
+                });
               } else if (data.type === 'text') {
                 currentReply += data.text;
                 // Update the last message
@@ -364,6 +374,15 @@ const AiChat = () => {
                     <p className="mt-1.5 text-[10px] opacity-50">
                       {formatTime(msg.created_at)}
                     </p>
+                    {msg.sources && msg.sources.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border/30 pt-3">
+                        {msg.sources.map((s, idx) => (
+                          <Badge key={idx} variant="outline" className="bg-background/50 text-[9px] text-muted-foreground hover:bg-background/80">
+                            📚 {s.title} ({s.category})
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
