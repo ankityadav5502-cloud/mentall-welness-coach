@@ -59,15 +59,24 @@ Deno.serve(async (req) => {
     const qEmbed = await getEmbedding(message, openaiApiKey);
 
     // 3. Vector search: personal docs + knowledge base
-    const [{ data: personalDocs }, { data: knowledgeDocs }] = await Promise.all([
+    // Pass embedding as number[] — PostgREST maps it to pgvector; JSON.stringify breaks retrieval.
+    const [personalRes, knowledgeRes] = await Promise.all([
       supabase.rpc("match_user_documents", {
-        query_embedding: JSON.stringify(qEmbed), match_user_id: user.id,
-        match_count: 5, match_threshold: 0.4,
+        query_embedding: qEmbed,
+        match_user_id: user.id,
+        match_count: 5,
+        match_threshold: 0.35,
       }),
       supabase.rpc("match_knowledge", {
-        query_embedding: JSON.stringify(qEmbed), match_count: 3, match_threshold: 0.4,
+        query_embedding: qEmbed,
+        match_count: 5,
+        match_threshold: 0.35,
       }),
     ]);
+    if (personalRes.error) console.error("match_user_documents:", personalRes.error.message);
+    if (knowledgeRes.error) console.error("match_knowledge:", knowledgeRes.error.message);
+    const personalDocs = personalRes.data ?? [];
+    const knowledgeDocs = knowledgeRes.data ?? [];
 
     // 4. Structured context
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
@@ -105,6 +114,18 @@ Deno.serve(async (req) => {
     if (tasks?.length) {
       const done = tasks.filter((t: any) => t.done).length;
       ctx.push(`\n=== TASKS === ${done}/${tasks.length} completed this week`);
+    }
+
+    const uniqueSources: { category: string; title: string }[] = [];
+    if (knowledgeDocs?.length) {
+      const seen = new Set();
+      knowledgeDocs.forEach((d: any) => {
+        const key = `${d.category}|${d.title}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueSources.push({ category: d.category, title: d.title });
+        }
+      });
     }
 
     const ctxBlock = ctx.length ? `\n\n--- CONTEXT ---\n${ctx.join("\n")}\n--- END ---` : "\n\n(New user, no data yet.)";
@@ -151,6 +172,11 @@ Deno.serve(async (req) => {
 
           // Send metadata first
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'metadata', sessionId: sid, title })}\n\n`));
+
+          // Send sources
+          if (uniqueSources.length > 0) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'sources', sources: uniqueSources })}\n\n`));
+          }
 
           // Stream chunks from OpenAI
           const reader = aiResp.body?.getReader();

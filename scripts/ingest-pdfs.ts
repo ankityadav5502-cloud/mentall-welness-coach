@@ -294,7 +294,7 @@ async function main() {
           category,
           title: `${chunk.section} [chunk ${chunk.index}]`,
           content: chunk.text,
-          embedding: JSON.stringify(embeddings[idx]),
+          embedding: embeddings[idx],
           source_file: fileName,
           chunk_index: chunk.index,
         }));

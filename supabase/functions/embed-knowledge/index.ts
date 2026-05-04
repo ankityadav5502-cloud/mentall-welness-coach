@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
       const { error: updateErr } = await supabase
         .from("knowledge_documents")
-        .update({ embedding: JSON.stringify(embedding) })
+        .update({ embedding })
         .eq("id", doc.id);
 
       if (!updateErr) embedded++;

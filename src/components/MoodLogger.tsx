@@ -15,15 +15,28 @@ export const MoodLogger = () => {
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await (supabase as any).from("moods").insert({
-      user_id: user.id,
-      value,
-      emoji,
-    });
+    const { data, error } = await (supabase as any)
+      .from("moods")
+      .insert({
+        user_id: user.id,
+        value,
+        emoji,
+      })
+      .select("id")
+      .single();
 
     if (error) {
       toast.error("Could not log mood", { description: error.message });
       return;
+    }
+    if (data?.id) {
+      supabase.functions
+        .invoke("embed-content", {
+          body: { sourceType: "mood", sourceId: data.id },
+        })
+        .catch(() => {
+          /* RAG embedding is best-effort */
+        });
     }
     toast.success(`Mood logged: ${label}`, { description: "Thanks for checking in. That's all you need to do today." });
   };

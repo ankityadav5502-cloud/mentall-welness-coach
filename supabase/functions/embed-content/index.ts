@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
           source_type: sourceType,
           source_id: sourceId,
           content: textContent,
-          embedding: JSON.stringify(embedding),
+          embedding,
           metadata,
         },
         { onConflict: "source_type,source_id" }
