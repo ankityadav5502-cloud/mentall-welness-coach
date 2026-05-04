@@ -17,15 +17,17 @@ Deno.serve(async (req) => {
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiApiKey) throw new Error("Missing OPENAI_API_KEY secret");
 
-    // Fetch all knowledge documents without embeddings
+    // Process a small batch per invocation (avoids Supabase Edge worker CPU/time limits).
+    const BATCH = 6;
     const { data: docs, error } = await supabase
       .from("knowledge_documents")
       .select("id, title, content, category")
-      .is("embedding", null);
+      .is("embedding", null)
+      .limit(BATCH);
 
     if (error) throw error;
     if (!docs || docs.length === 0) {
-      return new Response(JSON.stringify({ message: "All documents already embedded", count: 0 }), {
+      return new Response(JSON.stringify({ message: "All documents already embedded", count: 0, done: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -57,8 +59,21 @@ Deno.serve(async (req) => {
       if (!updateErr) embedded++;
     }
 
+    const { count: stillNull } = await supabase
+      .from("knowledge_documents")
+      .select("id", { count: "exact", head: true })
+      .is("embedding", null);
+
+    const remaining = stillNull ?? 0;
+
     return new Response(
-      JSON.stringify({ message: `Embedded ${embedded}/${docs.length} documents`, count: embedded }),
+      JSON.stringify({
+        message: `Embedded ${embedded} in this batch (${docs.length} attempted). ${remaining} rows still need embeddings.`,
+        count: embedded,
+        batchAttempted: docs.length,
+        remaining,
+        done: remaining === 0,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
