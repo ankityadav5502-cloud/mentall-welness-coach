@@ -275,12 +275,20 @@ const AiChat = () => {
   const isWelcomeScreen = messages.length === 0 && !activeSession;
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] gap-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">
+    <div className="relative flex h-[calc(100vh-12rem)] gap-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">
+      {showSidebar && (
+        <button
+          type="button"
+          aria-label="Close conversations panel"
+          onClick={() => setShowSidebar(false)}
+          className="absolute inset-0 z-10 bg-black/20 md:hidden"
+        />
+      )}
       {/* ── Sidebar ─────────────────────────────── */}
       <div
         className={`${
           showSidebar ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        } absolute z-20 h-full w-72 border-r border-border/60 bg-muted/30 transition-transform md:relative md:block`}
+        } absolute z-20 h-full w-[84%] max-w-72 border-r border-border/60 bg-background transition-transform md:relative md:block md:w-72`}
       >
         <div className="flex items-center justify-between border-b border-border/60 p-4">
           <h2 className="font-display text-sm font-semibold">Conversations</h2>
@@ -321,7 +329,7 @@ const AiChat = () => {
       </div>
 
       {/* ── Main chat area ──────────────────────── */}
-      <div className="flex flex-1 flex-col">
+      <div className={`flex-1 flex-col ${showSidebar ? "hidden md:flex" : "flex"}`}>
         {/* Top bar */}
         <div className="flex items-center gap-3 border-b border-border/60 px-4 py-3">
           <Button

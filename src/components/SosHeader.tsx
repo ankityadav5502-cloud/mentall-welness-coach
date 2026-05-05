@@ -84,8 +84,11 @@ export const SosHeader = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-      <div className="container flex h-16 items-center justify-between gap-3">
+    <header
+      className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
+      <div className="container flex h-14 items-center justify-between gap-3 md:h-16">
         <NavLink to="/" className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-bloom text-primary-foreground shadow-soft">
             <span className="font-display text-lg">U</span>
