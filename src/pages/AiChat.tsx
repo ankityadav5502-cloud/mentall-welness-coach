@@ -59,6 +59,7 @@ const AiChat = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isStreamingRef = useRef(false);
 
   // Load sessions
   useEffect(() => {
@@ -83,6 +84,8 @@ const AiChat = () => {
       return;
     }
     const loadMessages = async () => {
+      // Avoid clobbering optimistic/streaming UI when a brand new session id appears mid-stream.
+      if (isStreamingRef.current) return;
       const { data, error } = await (supabase as any)
         .from("ai_chat_messages")
         .select("id, role, content, created_at")
@@ -116,6 +119,7 @@ const AiChat = () => {
     };
     setMessages((prev) => [...prev, tempUserMsg]);
     setLoading(true);
+    isStreamingRef.current = true;
 
     let streamBuffer = ""; // buffer for incomplete chunks
     let assistantMessageId: string | null = null;
@@ -248,6 +252,7 @@ const AiChat = () => {
       // Remove optimistic message on error if it's just the user's msg
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
     } finally {
+      isStreamingRef.current = false;
       setLoading(false);
       inputRef.current?.focus();
     }
