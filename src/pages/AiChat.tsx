@@ -31,6 +31,15 @@ interface ChatSession {
   updated_at: string;
 }
 
+interface StreamPayload {
+  type?: "metadata" | "sources" | "text" | "error";
+  sessionId?: string;
+  title?: string;
+  sources?: { title?: string; category?: string }[];
+  text?: string;
+  error?: string;
+}
+
 const SUGGESTED_PROMPTS = [
   "How am I doing this week?",
   "What patterns do you see in my journal?",
@@ -54,10 +63,13 @@ const AiChat = () => {
   // Load sessions
   useEffect(() => {
     const loadSessions = async () => {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("ai_chat_sessions")
         .select("id, title, updated_at")
         .order("updated_at", { ascending: false });
+      if (error) {
+        toast.error("Could not load conversations", { description: error.message });
+      }
       setSessions(data || []);
       setSessionsLoading(false);
     };
@@ -71,11 +83,14 @@ const AiChat = () => {
       return;
     }
     const loadMessages = async () => {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("ai_chat_messages")
         .select("id, role, content, created_at")
         .eq("session_id", activeSession)
         .order("created_at", { ascending: true });
+      if (error) {
+        toast.error("Could not load messages", { description: error.message });
+      }
       setMessages(data || []);
     };
     void loadMessages();
@@ -103,6 +118,19 @@ const AiChat = () => {
     setLoading(true);
 
     let streamBuffer = ""; // buffer for incomplete chunks
+    let assistantMessageId: string | null = null;
+
+    const ensureAssistantMessage = () => {
+      if (assistantMessageId) return;
+      assistantMessageId = `resp-${Date.now()}`;
+      const assistantMsg: ChatMessage = {
+        id: assistantMessageId,
+        role: "assistant",
+        content: "",
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    };
 
     try {
       const {
@@ -136,7 +164,6 @@ const AiChat = () => {
       const decoder = new TextDecoder("utf-8");
       if (!reader) throw new Error("No readable stream");
 
-      let isFirstMetadata = true;
       let currentReply = "";
 
       while (true) {
@@ -150,68 +177,67 @@ const AiChat = () => {
         streamBuffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.startsWith("data: ") && line !== "data: [DONE]") {
-            try {
-              const data = JSON.parse(line.slice(6));
-              
-              if (data.type === 'metadata') {
-                if (isFirstMetadata) {
-                  if (!activeSession) {
-                    setActiveSession(data.sessionId);
-                    setSessions((prev) => [
-                      {
-                        id: data.sessionId,
-                        title: data.title || "New conversation",
-                        updated_at: new Date().toISOString(),
-                      },
-                      ...prev,
-                    ]);
-                  } else {
-                    setSessions((prev) =>
-                      prev.map((s) =>
-                        s.id === activeSession
-                          ? { ...s, updated_at: new Date().toISOString() }
-                          : s
-                      )
-                    );
-                  }
-                  
-                  // Create empty assistant message container
-                  const assistantMsg: ChatMessage = {
-                    id: `resp-${Date.now()}`,
-                    role: "assistant",
-                    content: "",
-                    created_at: new Date().toISOString(),
-                  };
-                  setMessages((prev) => [...prev, assistantMsg]);
-                  isFirstMetadata = false;
-                }
-              } else if (data.type === 'sources') {
-                setMessages((prev) => {
-                  const newMsgs = [...prev];
-                  const lastMsg = newMsgs[newMsgs.length - 1];
-                  if (lastMsg && lastMsg.role === "assistant") {
-                    newMsgs[newMsgs.length - 1] = { ...lastMsg, sources: data.sources };
-                  }
-                  return newMsgs;
-                });
-              } else if (data.type === 'text') {
-                currentReply += data.text;
-                // Update the last message
-                setMessages((prev) => {
-                  const newMsgs = [...prev];
-                  const lastMsg = newMsgs[newMsgs.length - 1];
-                  if (lastMsg && lastMsg.role === "assistant") {
-                    newMsgs[newMsgs.length - 1] = { ...lastMsg, content: currentReply };
-                  }
-                  return newMsgs;
-                });
-              } else if (data.type === 'error') {
-                throw new Error(data.error);
-              }
-            } catch (e) {
-              // Ignore partial JSON parsing errors
+          if (!line.startsWith("data: ")) continue;
+          const payload = line.slice(6).trim();
+          if (!payload || payload === "[DONE]") continue;
+
+          let data: StreamPayload;
+          try {
+            data = JSON.parse(payload) as StreamPayload;
+          } catch {
+            // Ignore partial JSON lines and wait for complete chunks.
+            continue;
+          }
+
+          if (data.type === "error") {
+            throw new Error(data.error || "Chat stream failed");
+          }
+
+          if (data.type === "metadata") {
+            ensureAssistantMessage();
+            if (!activeSession && data.sessionId) {
+              setActiveSession(data.sessionId);
+              setSessions((prev) => [
+                {
+                  id: data.sessionId as string,
+                  title: data.title || "New conversation",
+                  updated_at: new Date().toISOString(),
+                },
+                ...prev,
+              ]);
+            } else if (activeSession) {
+              setSessions((prev) =>
+                prev.map((s) =>
+                  s.id === activeSession
+                    ? { ...s, updated_at: new Date().toISOString() }
+                    : s
+                )
+              );
             }
+            continue;
+          }
+
+          if (data.type === "sources") {
+            ensureAssistantMessage();
+            const sources = (data.sources ?? [])
+              .filter((s) => Boolean(s?.title) && Boolean(s?.category))
+              .map((s) => ({ title: s.title as string, category: s.category as string }));
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId ? { ...m, sources } : m
+              )
+            );
+            continue;
+          }
+
+          if (data.type === "text") {
+            ensureAssistantMessage();
+            currentReply += data.text || "";
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantMessageId ? { ...m, content: currentReply } : m
+              )
+            );
           }
         }
       }
