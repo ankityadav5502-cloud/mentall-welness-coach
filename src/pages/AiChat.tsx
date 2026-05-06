@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -60,6 +59,11 @@ const AiChat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isStreamingRef = useRef(false);
+  const activeSessionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    activeSessionRef.current = activeSession;
+  }, [activeSession]);
 
   // Load sessions
   useEffect(() => {
@@ -98,6 +102,28 @@ const AiChat = () => {
     };
     void loadMessages();
   }, [activeSession]);
+
+  /** After streaming, DB rows may lag briefly — retry before replacing UI with []. */
+  const syncMessagesFromDb = async (sessionId: string) => {
+    const delays = [0, 120, 250, 400, 600, 900];
+    for (const ms of delays) {
+      if (ms > 0) await new Promise((r) => setTimeout(r, ms));
+      const { data, error } = await (supabase as any)
+        .from("ai_chat_messages")
+        .select("id, role, content, created_at")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true });
+      if (error) {
+        toast.error("Could not sync messages", { description: error.message });
+        return;
+      }
+      const rows = data || [];
+      if (rows.length > 0) {
+        setMessages(rows);
+        return;
+      }
+    }
+  };
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -200,10 +226,12 @@ const AiChat = () => {
           if (data.type === "metadata") {
             ensureAssistantMessage();
             if (!activeSession && data.sessionId) {
-              setActiveSession(data.sessionId);
+              const sid = data.sessionId as string;
+              activeSessionRef.current = sid;
+              setActiveSession(sid);
               setSessions((prev) => [
                 {
-                  id: data.sessionId as string,
+                  id: sid,
                   title: data.title || "New conversation",
                   updated_at: new Date().toISOString(),
                 },
@@ -253,12 +281,15 @@ const AiChat = () => {
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
     } finally {
       isStreamingRef.current = false;
+      const sid = activeSessionRef.current;
+      if (sid) void syncMessagesFromDb(sid);
       setLoading(false);
       inputRef.current?.focus();
     }
   };
 
   const startNewChat = () => {
+    activeSessionRef.current = null;
     setActiveSession(null);
     setMessages([]);
     setShowSidebar(false);
@@ -280,7 +311,7 @@ const AiChat = () => {
   const isWelcomeScreen = messages.length === 0 && !activeSession;
 
   return (
-    <div className="relative flex h-[calc(100vh-12rem)] gap-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">
+    <div className="relative flex h-[calc(100vh-12rem)] min-h-0 gap-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">
       {showSidebar && (
         <button
           type="button"
@@ -312,6 +343,7 @@ const AiChat = () => {
                 <button
                   key={s.id}
                   onClick={() => {
+                    activeSessionRef.current = s.id;
                     setActiveSession(s.id);
                     setShowSidebar(false);
                   }}
@@ -334,7 +366,9 @@ const AiChat = () => {
       </div>
 
       {/* ── Main chat area ──────────────────────── */}
-      <div className={`flex-1 flex-col ${showSidebar ? "hidden md:flex" : "flex"}`}>
+      <div
+        className={`min-h-0 flex-1 flex-col ${showSidebar ? "hidden md:flex" : "flex"}`}
+      >
         {/* Top bar */}
         <div className="flex items-center gap-3 border-b border-border/60 px-4 py-3">
           <Button
@@ -357,7 +391,7 @@ const AiChat = () => {
         </div>
 
         {/* Messages area */}
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="min-h-0 flex-1 p-4">
           {isWelcomeScreen ? (
             <div className="flex h-full flex-col items-center justify-center gap-6 py-12">
               <div className="grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400/20 to-teal-600/20">
