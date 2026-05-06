@@ -309,6 +309,7 @@ const AiChat = () => {
   };
 
   const isWelcomeScreen = messages.length === 0 && !activeSession;
+  const isEmptyActiveConversation = Boolean(activeSession) && messages.length === 0;
 
   return (
     <div className="relative flex h-[calc(100vh-12rem)] min-h-0 gap-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card">
@@ -424,6 +425,22 @@ const AiChat = () => {
                   call Tele MANAS: <strong>14416</strong>
                 </span>
               </div>
+            </div>
+          ) : isEmptyActiveConversation ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 py-12 text-center">
+              <p className="text-sm text-muted-foreground">
+                Loading conversation…
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const sid = activeSessionRef.current;
+                  if (sid) void syncMessagesFromDb(sid);
+                }}
+              >
+                Refresh messages
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">
